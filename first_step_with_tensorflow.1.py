@@ -24,26 +24,26 @@ pd.options.display.max_rows = 10
 pd.options.display.float_format = '{:.1f}'.format
 
 # we'll load our data set
-california_housing_dataframe = pd.read_csv("https://download.mlcc.google.com/mledu-datasets/california_housing_train.csv", sep=",")
+california_housing_dataframe = pd.read_csv("/home/mandaliya/Documents/productionForcasting.csv", sep=",")
 
 # randomize the data that is reindex the data calculate the median house value 
 # we'll scale median_house_value to be in units of thousands it can be learned a little more easily with learning rates in a range 
 
-california_housing_dataframe = california_housing_dataframe.reindex(
-    np.random.permutation(california_housing_dataframe.index))
-california_housing_dataframe["median_house_value"] /= 1000.0
+#california_housing_dataframe = california_housing_dataframe.reindex(
+#    np.random.permutation(california_housing_dataframe.index))
+#california_housing_dataframe["median_house_value"] /= 1000.0
 
 # examine the data 
 print(california_housing_dataframe.describe())
 
 # Define the input feature: total_rooms.
-# my_feature = california_housing_dataframe[['total_rooms']]
+my_feature = california_housing_dataframe[['total_production']]
 
 # Configure a numeric feature column for total_rooms.
-feature_columns = [tf.feature_column.numeric_column('population')]
+feature_columns = [tf.feature_column.numeric_column('total_production')]
 
 # Define the label
-targets = california_housing_dataframe['median_house_value']
+targets = california_housing_dataframe['total_production']
 
 # Use gradient descent as the optimizer for training the model.
 my_optimizer = tf.train.GradientDescentOptimizer(learning_rate = 0.0000001)
@@ -56,6 +56,7 @@ linear_regressor = tf.estimator.LinearRegressor(
     feature_columns=feature_columns,
     optimizer=my_optimizer
 )
+
 
 def my_input_fn(features, targets, batch_size=1, shuffle=True, num_epochs=None):
     """Trains a linear regression model of one feature.
@@ -78,7 +79,7 @@ def my_input_fn(features, targets, batch_size=1, shuffle=True, num_epochs=None):
 
     # Shuffle the data, if specified
     if shuffle:
-        ds = ds.shuffle(buffer_size=10000)
+        ds = ds.shuffle(buffer_size=10)
     
     # Return the next batch of data.
     features, labels = ds.make_one_shot_iterator().get_next()
@@ -94,7 +95,7 @@ _ = linear_regressor.train(
 # Create an input function for predictions.
 # Note: Since we're making just one prediction for each example, we don't 
 # need to repeat or shuffle the data here.
-prediction_input_fn = lambda:my_input_fn(my_feature, targets, num_epochs=1, shuffle=False)
+prediction_input_fn = lambda:my_input_fn(my_feature, targets, num_epochs=1, shuffle=True)
 
 # Call predict() on the linear_regressor to make predictions.
 predictions = linear_regressor.predict(input_fn=prediction_input_fn)
@@ -108,8 +109,8 @@ root_mean_squared_error = math.sqrt(mean_squared_error)
 print("Mean Squared Error (on training data): %0.3f" % mean_squared_error)
 print("Root Mean Squared Error (on training data): %0.3f" % root_mean_squared_error)
 
-min_house_value = california_housing_dataframe["median_house_value"].min()
-max_house_value = california_housing_dataframe["median_house_value"].max()
+min_house_value = california_housing_dataframe["total_production"].min()
+max_house_value = california_housing_dataframe["total_production"].max()
 min_max_difference = max_house_value - min_house_value
 
 print("Min. Median House Value: %0.3f" % min_house_value)
@@ -127,14 +128,14 @@ print(calibration_data.describe())
 #We can also visualize the data and the line we've learned. Recall that linear regression on a single feature can be drawn as a line mapping input x to output y.
 
 # First, we'll get a uniform random sample of the data so we can make a readable scatter plot.
-sample = california_housing_dataframe.sample(n=300)
+sample = california_housing_dataframe.sample(n=200)
 
 # Get the min and max total_rooms values.
-x_0 = sample["total_rooms"].min()
-x_1 = sample["total_rooms"].max()
+x_0 = sample["total_production"].min()
+x_1 = sample["total_production"].max()
 
 # Retrieve the final weight and bias generated during training.
-weight = linear_regressor.get_variable_value('linear/linear_model/total_rooms/weights')[0]
+weight = linear_regressor.get_variable_value('linear/linear_model/total_production/weights')[0]
 bias = linear_regressor.get_variable_value('linear/linear_model/bias_weights')
 
 # Get the predicted median_house_values for the min and max total_rooms values.
@@ -145,11 +146,12 @@ y_1 = weight * x_1 + bias
 plt.plot([x_0, x_1], [y_0, y_1], c='r')
 
 # Label the graph axes.
-plt.ylabel("median_house_value")
-plt.xlabel("total_rooms")
+plt.ylabel("timeStamp")
+plt.xlabel("total_production")
 
 # Plot a scatter plot from our data sample.
-plt.scatter(sample["total_rooms"], sample["median_house_value"])
+plt.scatter(sample["total_production"], sample["total_production"])
 
 # Display graph.
 plt.show()
+
